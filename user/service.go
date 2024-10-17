@@ -13,6 +13,9 @@ import (
 type UserRepo interface {
 	Save(user *domain.UserCreate) error
 	GetUser(conditions map[string]any) (*domain.User, error)
+	GetAll() ([]domain.User, error)
+	Update(id uuid.UUID, user *domain.UserUpdate) error
+	Delete(id uuid.UUID) error
 }
 
 type Hasher interface {
@@ -88,4 +91,40 @@ func (s *userService) Login(data *domain.UserLogin) (tokenprovider.Token, error)
 	}
 
 	return accessToken, nil
+}
+
+func (s *userService) GetAllUser() ([]domain.User, error) {
+	users, err := s.userRepo.GetAll()
+	if err != nil {
+		return nil, clients.ErrCannotListEntity(domain.User{}.TableName(), err)
+	}
+
+	return users, nil
+}
+
+func (s *userService) GetUserByID(id uuid.UUID) (domain.User, error) {
+    user, err := s.userRepo.GetUser(map[string]any{"id": id})
+    if err != nil {
+        return domain.User{}, clients.ErrCannotGetEntity(domain.User{}.TableName(), err)
+    }
+    return *user, nil
+}
+
+
+func (s *userService) UpdateUser(id uuid.UUID, user *domain.UserUpdate) error {
+	err := s.userRepo.Update(id, user)
+	if err != nil {
+		return clients.ErrCannotUpdateEntity(user.TableName(), err)
+	}
+
+	return nil
+}
+
+func (s *userService) DeleteUser(id uuid.UUID) error {
+	err := s.userRepo.Delete(id)
+	if err != nil {
+		return clients.ErrCannotDeleteEntity(domain.User{}.TableName(), err)
+	}
+
+	return nil
 }

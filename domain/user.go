@@ -110,3 +110,12 @@ var (
 		"ErrEmailExisted",
 	)
 )
+
+type UserUpdate struct {
+	FirstName string   `json:"first_name"`
+	LastName  string   `json:"last_name"`
+}
+
+func (UserUpdate) TableName() string {
+	return User{}.TableName()
+}

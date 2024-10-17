@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"os"
 	"time"
-
+	"github.com/joho/godotenv"
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
@@ -34,6 +34,7 @@ const (
 )
 
 func main() {
+	godotenv.Load()
 	db, err := gorm.Open(postgres.Open(os.Getenv("CONNECTION_STRING")), &gorm.Config{})
 	if err != nil {
 		log.Fatalln(err)
@@ -54,6 +55,7 @@ func main() {
 	tokenExpire := 60 * 60 * 24 * 30
 	userService := user.NewUserService(userRepo, hasher, tokenProvider, tokenExpire)
 
+
 	authCache := memcache.NewUserCaching(memcache.NewRedisCache(), userRepo)
 	middlewareAuth := middleware.RequiredAuth(tokenProvider, authCache)
 
@@ -66,7 +68,7 @@ func main() {
 	middlewareRateLimit := middleware.RateLimiter(limiter)
 
 	restApi.NewItemHandler(apiVersion, itemService, middlewareAuth, middlewareRateLimit)
-	restApi.NewUserHandler(apiVersion, userService)
+	restApi.NewUserHandler(apiVersion, userService, middlewareAuth, middlewareRateLimit)
 
 	r.GET("/ping", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
